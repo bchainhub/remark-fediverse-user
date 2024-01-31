@@ -1,8 +1,9 @@
 {
   "name": "remark-fediverse-user",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A Remark plugin to transform fediverse user notations into markdown links.",
   "main": "dist/index.js",
+  "types": "types/index.d.ts",
   "type": "module",
   "scripts": {
     "test": "npm run build && node --loader ts-node/esm ./node_modules/uvu/bin.js test",
@@ -13,6 +14,7 @@
   "files": [
     "src/",
     "dist/",
+    "types/",
     "LICENSE",
     "README.md"
   ],
