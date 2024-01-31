@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "test": "clear && npm run build && node --loader ts-node/esm ./node_modules/uvu/bin.js test",
+    "test": "npm run build && node --loader ts-node/esm ./node_modules/uvu/bin.js test",
     "build": "tsc",
     "dev": "node --loader ts-node/esm --inspect src/index.ts",
     "start": "node --loader ts-node/esm src/index.ts"
