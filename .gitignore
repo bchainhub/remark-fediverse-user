@@ -1,0 +1,29 @@
+pids
+logs
+results
+
+npm-debug.log
+node_modules
+yarn.lock
+yarn-error.log
+package-lock.json
+
+/dist-test/
+
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
