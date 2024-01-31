@@ -1,0 +1,56 @@
+{
+  "name": "remark-fediverse-user",
+  "version": "0.1.0",
+  "description": "A Remark plugin to transform fediverse user notations into markdown links.",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "clear && npm run build && node --loader ts-node/esm ./node_modules/uvu/bin.js test",
+    "build": "tsc",
+    "dev": "node --loader ts-node/esm --inspect src/index.ts",
+    "start": "node --loader ts-node/esm src/index.ts"
+  },
+  "files": [
+    "src/",
+    "dist/",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "remark",
+    "plugin",
+    "markdown",
+    "links",
+    "transform",
+    "fediverse",
+    "pods",
+    "docusaurus",
+    "gatsby"
+  ],
+  "author": "Blockchain Hub",
+  "license": "CORE",
+  "dependencies": {
+    "unist-util-visit": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.2",
+    "@types/unist": "^3.0.2",
+    "esm": "^3.2.25",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2",
+    "undici-types": "^5.27.2",
+    "unified": "^11.0.4",
+    "uvu": "^0.5.6"
+  },
+  "engines": {
+    "node": ">=13.2.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "development": "./src/index.ts"
+    }
+  }
+}
