@@ -1,6 +1,6 @@
 {
   "name": "remark-fediverse-user",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "A Remark plugin to transform fediverse user notations into markdown links.",
   "main": "dist/index.js",
   "types": "types/index.d.ts",
@@ -53,8 +53,7 @@
     ".": {
       "import": "./dist/index.js",
       "require": "./dist/index.js",
-      "types": "./types/index.d.ts",
-      "development": "./src/index.ts"
+      "types": "./types/index.d.ts"
     }
   }
 }
