@@ -4,9 +4,11 @@ export default function fediverseUser() {
         visit(ast, 'text', (node, index, parent) => {
             if (!parent || typeof index !== 'number')
                 return;
-            const podPattern = /<@([a-z0-9_-]+)@([\w.]+)>/gi;
+            const podPattern = /@([a-z0-9_-]+)@([\w.]+)/gi;
+            const endsWithPattern = /(\s@|^@)$/;
             let prevNode = index > 0 ? parent.children[index - 1] : null;
-            let fullText = (prevNode && prevNode.type === 'text' && prevNode.value.endsWith('<@'))
+            let prevNodeEnding = endsWithPattern.test(prevNode.value);
+            let fullText = (prevNode && prevNode.type === 'text' && prevNodeEnding)
                 ? prevNode.value + node.value
                 : node.value;
             let newNodes = [];
@@ -21,7 +23,7 @@ export default function fediverseUser() {
             if (lastIndex < fullText.length) {
                 newNodes.push(makeTextNode(fullText.slice(lastIndex)));
             }
-            if (prevNode && prevNode.type === 'text' && prevNode.value.endsWith('@')) {
+            if (prevNode && prevNode.type === 'text' && prevNodeEnding) {
                 parent.children.splice(index - 1, 2, ...newNodes);
             }
             else {
