@@ -32,11 +32,7 @@ remark()
   });
 ```
 
-The plugin scans for Fediverse user notations (e.g., `@username@domain`) in your markdown content and transforms them into markdown links.
-
-The fediverse handle is detected only when `@` sign is defined at the beginning of the word and prefixed with any space character or at the beginning of the line.
-
-Then for example, ` @username@domain` is valid but `prefix@username@domain` is not.
+The plugin scans for Fediverse user notations (e.g., `<@username@domain>`) in your markdown content and transforms them into markdown links.
 
 ## Features
 
