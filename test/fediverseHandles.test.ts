@@ -23,11 +23,9 @@ FediversePodsHandlers('Transforms pod handles', async () => {
   assert.match(output, /\[@rastislav@coretalk\.space\]\(https:\/\/coretalk\.space\/@rastislav\ "@rastislav"\)/);
 });
 
-FediversePodsHandlers('Test combined handlers: Fediverse, CorePass, Blockchain', async () => {
+FediversePodsHandlers('Test combined handlers: Fediverse', async () => {
   const input = 'The quick brown fox <@rastislav@coretalk.space> jumps over the lazy dog.';
-  console.log('Input: ', input);
   const output = await processMarkdown(input);
-  console.log('Output: ', output);
   assert.match(output, /The quick brown fox \[@rastislav@coretalk\.space\]\(https:\/\/coretalk\.space\/@rastislav\ "@rastislav"\) jumps over the lazy dog./);
 });
 
