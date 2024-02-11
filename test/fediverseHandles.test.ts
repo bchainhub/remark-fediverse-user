@@ -17,16 +17,17 @@ const processMarkdown = async (markdown: string) => {
 
 const FediversePodsHandlers = suite('Fediverse Pods handlers');
 
-FediversePodsHandlers('Transforms pod handles', async () => {
-  const input = '<@rastislav@coretalk.space>';
-  const output = await processMarkdown(input);
-  assert.match(output, /\[@rastislav@coretalk\.space\]\(https:\/\/coretalk\.space\/@rastislav\ "@rastislav"\)/);
+FediversePodsHandlers('Transforms email links into Fediverse mentions', async () => {
+  const inputMarkdown = 'Contact us at @<mailto:rastislav@coretalk.space>.';
+  const output = await processMarkdown(inputMarkdown);
+  assert.match(output, /Contact us at \[@rastislav@coretalk.space\]\(https:\/\/coretalk.space\/@rastislav "@rastislav"\)\./);
 });
 
-FediversePodsHandlers('Test combined handlers: Fediverse', async () => {
-  const input = 'The quick brown fox <@rastislav@coretalk.space> jumps over the lazy dog.';
-  const output = await processMarkdown(input);
-  assert.match(output, /The quick brown fox \[@rastislav@coretalk\.space\]\(https:\/\/coretalk\.space\/@rastislav\ "@rastislav"\) jumps over the lazy dog./);
+FediversePodsHandlers('Keeps email links unmodified without preceding @ symbol', async () => {
+  const inputMarkdown = 'Send an email to <mailto:rastislav@coretalk.space> for more info.';
+  const expectedOutput = 'Send an email to <mailto:rastislav@coretalk.space> for more info.';
+  const output = await processMarkdown(inputMarkdown);
+  assert.is(output.trim(), expectedOutput.trim());
 });
 
 FediversePodsHandlers.run();

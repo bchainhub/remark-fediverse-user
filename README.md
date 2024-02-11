@@ -32,7 +32,9 @@ remark()
   });
 ```
 
-The plugin scans for Fediverse user notations (e.g., `<@username@domain>`) in your markdown content and transforms them into markdown links.
+The plugin scans for Fediverse user notations (e.g., `@username@domain`) in your markdown content and transforms them into markdown links.
+
+It is transforming the e-mail links with prefix `@` then any e-mail link with the prefix will be transformed to a fediverse link.
 
 ## Features
 
