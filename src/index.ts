@@ -1,20 +1,24 @@
 import { Node } from 'unist';
 import { visit } from 'unist-util-visit';
 
-interface ParentNode extends Node {
-  children: Node[];
-}
-
 interface LinkNode extends Node {
   type: 'link';
   url: string;
   title: string | null;
-  children: Array<{ type: 'text'; value: string }>;
+  children: Array<TextNode>;
 }
 
 interface TextNode extends Node {
   type: 'text';
   value: string;
+}
+
+interface ParentNode extends Node {
+  children: Array<Node>;
+}
+
+interface FediverseUserOptions {
+  checkPlain?: boolean;
 }
 
 const makeLinkNode = (url: string, text: string, title?: string): LinkNode => ({
@@ -29,60 +33,76 @@ const makeTextNode = (text: string): TextNode => ({
   value: text,
 });
 
+function isLinkNode(node: Node): node is LinkNode {
+  return node.type === 'link';
+}
+
 function isTextNode(node: Node): node is TextNode {
   return node.type === 'text';
 }
 
-export default function fediverseUser(): (ast: Node) => void {
-  const transformer = (ast: Node): void => {
-    visit(ast, 'text', (node, index, parent) => {
-      // Assuming node is of type Node, but we specifically work with TextNode in this context
-      if (!isTextNode(node) || !parent || typeof index !== 'number') return;
-      const parentNode: ParentNode = parent as ParentNode;
-      let prevNode: TextNode | undefined = index > 0 && isTextNode(parentNode.children[index - 1]) ? (parentNode.children[index - 1] as TextNode) : undefined;
-      let nextNode: TextNode | undefined = index + 1 < parentNode.children.length && isTextNode(parentNode.children[index + 1]) ? (parentNode.children[index + 1] as TextNode) : undefined;
+export default function fediverseUser(options: FediverseUserOptions = {}): (ast: Node) => void {
+  return function transformer(ast: Node): void {
+    if (options.checkPlain) {
+      visit<Node, 'text'>(ast, 'text', (node: TextNode, index: number, parent: ParentNode | undefined) => {
+        if (!parent || typeof index !== 'number') return;
 
-      if (prevNode && prevNode.value.endsWith('[@') && nextNode && nextNode.value.startsWith(']')) {
-        // Extract username and domain from the current node's value
-        let nodeValue = (node as TextNode).value;
-        if ((node as LinkNode).type === 'link' && (node as LinkNode).children.length > 0 && isTextNode((node as LinkNode).children[0])) {
-          nodeValue = ((node as LinkNode).children[0] as TextNode).value;
-        }
-        const match = nodeValue.match(/([a-z0-9_-]+)@([\w.]+)/i);
-        if (match) {
-          const [username, domain] = match;
-          // Create a new link node replacing the current node
-          parentNode.children[index] = makeLinkNode(`https://${domain}/@${username}`, `@${username}@${domain}`);
-          // Adjust surrounding nodes as necessary
-          prevNode.value = prevNode.value.slice(0, -2);
-          nextNode.value = nextNode.value.substring(1);
-          if (nextNode.value === '') {
-            parentNode.children.splice(index + 1, 1); // Remove the next node if it's empty
-          }
-        }
-      } else {
-        // Handle mention contained within a single node
-        const podPattern = /\[@([a-z0-9_-]+)@([\w.]+)\]/gi;
-        const matches = [...(node as TextNode).value.matchAll(podPattern)];
+        const podPattern = /@([a-z0-9_-]+)@([\w.]+)/gi;
+        const matches = [...node.value.matchAll(podPattern)];
         let newNodes = [];
         let lastIndex = 0;
+
         matches.forEach((match) => {
-            const [fullMatch, username, domain] = match;
-            const matchIndex = match.index ?? 0;
-            if (matchIndex > lastIndex) {
-              newNodes.push(makeTextNode((node as TextNode).value.slice(lastIndex, matchIndex)));
-            }
-            newNodes.push(makeLinkNode(`https://${domain}/@${username}`, `@${username}@${domain}`));
-            lastIndex = matchIndex + fullMatch.length;
+          const [fullMatch, username, domain] = match;
+          const matchIndex = match.index ?? 0;
+
+          if (matchIndex > lastIndex) {
+            newNodes.push(makeTextNode(node.value.slice(lastIndex, matchIndex)));
+          }
+
+          newNodes.push(makeLinkNode(`https://${domain}/@${username}`, `@${username}@${domain}`, `@${username}`));
+          lastIndex = matchIndex + fullMatch.length;
         });
-        if (lastIndex < (node as TextNode).value.length) {
-          newNodes.push(makeTextNode((node as TextNode).value.slice(lastIndex)));
+
+        if (lastIndex < node.value.length) {
+          newNodes.push(makeTextNode(node.value.slice(lastIndex)));
         }
+
         if (newNodes.length > 0) {
-          parentNode.children.splice(index, 1, ...newNodes);
+          parent.children.splice(index, 1, ...newNodes);
         }
-      }
-    });
+      });
+    } else {
+      visit<Node, 'link'>(ast, 'link', (node: Node, index: number, parent: ParentNode | undefined) => {
+        if (!isLinkNode(node) || !parent || typeof index !== 'number' || !node.url.startsWith('mailto:')) return;
+
+        const prevNode = index > 0 ? parent.children[index - 1] : null;
+
+        // Check if the link node has text children and the previous node ends with '@'
+        if (prevNode && isTextNode(prevNode) && prevNode.value.endsWith('@') &&
+            node.children.length > 0 && isTextNode(node.children[0])) {
+
+          const emailMatch = node.children[0].value.match(/([a-z0-9_-]+)@([\w.]+)/i);
+          if (emailMatch) {
+            const username = emailMatch[1];
+            const domain = emailMatch[2];
+
+            // Remove the "@" from the end of the previous node's value
+            prevNode.value = prevNode.value.slice(0, -1);
+
+            // Remove the previous node if it's now empty
+            if (prevNode.value === '') {
+              parent.children.splice(index - 1, 1);
+              // No need to adjust the index since we're not iterating in a loop here
+            }
+
+            // Transform the current node
+            node.url = `https://${domain}/@${username}`;
+            node.title = `@${username}`;
+            node.children = [{ type: 'text', value: `@${username}@${domain}` }];
+          }
+        }
+      });
+    }
   };
-  return transformer;
 }

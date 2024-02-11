@@ -9,35 +9,19 @@ const makeTextNode = (text) => ({
     type: 'text',
     value: text,
 });
+function isLinkNode(node) {
+    return node.type === 'link';
+}
 function isTextNode(node) {
     return node.type === 'text';
 }
-export default function fediverseUser() {
-    const transformer = (ast) => {
-        visit(ast, 'text', (node, index, parent) => {
-            if (!isTextNode(node) || !parent || typeof index !== 'number')
-                return;
-            const parentNode = parent;
-            let prevNode = index > 0 && isTextNode(parentNode.children[index - 1]) ? parentNode.children[index - 1] : undefined;
-            let nextNode = index + 1 < parentNode.children.length && isTextNode(parentNode.children[index + 1]) ? parentNode.children[index + 1] : undefined;
-            if (prevNode && prevNode.value.endsWith('[@') && nextNode && nextNode.value.startsWith(']')) {
-                let nodeValue = node.value;
-                if (node.type === 'link' && node.children.length > 0 && isTextNode(node.children[0])) {
-                    nodeValue = node.children[0].value;
-                }
-                const match = nodeValue.match(/([a-z0-9_-]+)@([\w.]+)/i);
-                if (match) {
-                    const [username, domain] = match;
-                    parentNode.children[index] = makeLinkNode(`https://${domain}/@${username}`, `@${username}@${domain}`);
-                    prevNode.value = prevNode.value.slice(0, -2);
-                    nextNode.value = nextNode.value.substring(1);
-                    if (nextNode.value === '') {
-                        parentNode.children.splice(index + 1, 1);
-                    }
-                }
-            }
-            else {
-                const podPattern = /\[@([a-z0-9_-]+)@([\w.]+)\]/gi;
+export default function fediverseUser(options = {}) {
+    return function transformer(ast) {
+        if (options.checkPlain) {
+            visit(ast, 'text', (node, index, parent) => {
+                if (!parent || typeof index !== 'number')
+                    return;
+                const podPattern = /@([a-z0-9_-]+)@([\w.]+)/gi;
                 const matches = [...node.value.matchAll(podPattern)];
                 let newNodes = [];
                 let lastIndex = 0;
@@ -47,17 +31,38 @@ export default function fediverseUser() {
                     if (matchIndex > lastIndex) {
                         newNodes.push(makeTextNode(node.value.slice(lastIndex, matchIndex)));
                     }
-                    newNodes.push(makeLinkNode(`https://${domain}/@${username}`, `@${username}@${domain}`));
+                    newNodes.push(makeLinkNode(`https://${domain}/@${username}`, `@${username}@${domain}`, `@${username}`));
                     lastIndex = matchIndex + fullMatch.length;
                 });
                 if (lastIndex < node.value.length) {
                     newNodes.push(makeTextNode(node.value.slice(lastIndex)));
                 }
                 if (newNodes.length > 0) {
-                    parentNode.children.splice(index, 1, ...newNodes);
+                    parent.children.splice(index, 1, ...newNodes);
                 }
-            }
-        });
+            });
+        }
+        else {
+            visit(ast, 'link', (node, index, parent) => {
+                if (!isLinkNode(node) || !parent || typeof index !== 'number' || !node.url.startsWith('mailto:'))
+                    return;
+                const prevNode = index > 0 ? parent.children[index - 1] : null;
+                if (prevNode && isTextNode(prevNode) && prevNode.value.endsWith('@') &&
+                    node.children.length > 0 && isTextNode(node.children[0])) {
+                    const emailMatch = node.children[0].value.match(/([a-z0-9_-]+)@([\w.]+)/i);
+                    if (emailMatch) {
+                        const username = emailMatch[1];
+                        const domain = emailMatch[2];
+                        prevNode.value = prevNode.value.slice(0, -1);
+                        if (prevNode.value === '') {
+                            parent.children.splice(index - 1, 1);
+                        }
+                        node.url = `https://${domain}/@${username}`;
+                        node.title = `@${username}`;
+                        node.children = [{ type: 'text', value: `@${username}@${domain}` }];
+                    }
+                }
+            });
+        }
     };
-    return transformer;
 }
