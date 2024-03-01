@@ -20,16 +20,20 @@ yarn add remark-fediverse-user
 
 To use this plugin in your Remark processor, import it and add it to your processing pipeline:
 
-```javascript
-const remark = require('remark');
-const fediverseUser = require('remark-fediverse-user');
+```typescript
+import remark from 'remark';
+import fediverseUser from 'remark-fediverse-user';
 
-remark()
-  .use(fediverseUser)
-  .process('Your markdown text here')
-  .then(output => {
+(async () => {
+  try {
+    const output = await remark()
+      .use(fediverseUser)
+      .process('Your markdown text here');
     console.log(output.contents);
-  });
+  } catch (error) {
+    console.error(error);
+  }
+})();
 ```
 
 The plugin scans for Fediverse user notations (e.g., `@username@domain`) in your markdown content and transforms them into markdown links.
