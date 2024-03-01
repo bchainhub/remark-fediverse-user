@@ -11,6 +11,10 @@
     "dev": "node --loader ts-node/esm --inspect src/index.ts",
     "start": "node --loader ts-node/esm src/index.ts"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bchainhub/remark-fediverse-user"
+  },
   "files": [
     "src/",
     "dist/",
