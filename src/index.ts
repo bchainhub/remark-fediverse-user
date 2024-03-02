@@ -1,4 +1,4 @@
-import { Node } from 'unist';
+import { type Node } from 'unist';
 import { visit } from 'unist-util-visit';
 
 interface LinkNode extends Node {
@@ -29,6 +29,11 @@ function isTextNode(node: Node): node is TextNode {
   return node.type === 'text';
 }
 
+/**
+ * A remark plugin to parse the email links prefixed with `@` and transform them to fediverse link.
+ * @param options - Options for the Fediverse plugin.
+ * @returns A transformer for the AST.
+ */
 export default function fediverseUser(options: FediverseUserOptions = {}): (ast: Node) => void {
   return function transformer(ast: Node): void {
     visit<Node, 'link'>(ast, 'link', (node: Node, index: number, parent: ParentNode | undefined) => {
