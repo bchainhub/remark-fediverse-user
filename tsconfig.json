@@ -4,6 +4,7 @@
     "module": "Node16",
     "outDir": "./dist",
     "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./node_modules/@types", "./types"],
     "removeComments": true,
     "declaration": true
