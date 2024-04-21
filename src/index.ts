@@ -34,7 +34,7 @@ function isTextNode(node: Node): node is TextNode {
  * @param options - Options for the Fediverse plugin.
  * @returns A transformer for the AST.
  */
-export default function fediverseUser(options: FediverseUserOptions = {}): (ast: Node) => void {
+export default function remarkFediverseUser(options: FediverseUserOptions = {}): (ast: Node) => void {
   return function transformer(ast: Node): void {
     visit<Node, 'link'>(ast, 'link', (node: Node, index: number, parent: ParentNode | undefined) => {
       if (!isLinkNode(node) || !parent || typeof index !== 'number' || !node.url.startsWith('mailto:')) return;

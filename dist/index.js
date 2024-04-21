@@ -5,7 +5,7 @@ function isLinkNode(node) {
 function isTextNode(node) {
     return node.type === 'text';
 }
-export default function fediverseUser(options = {}) {
+export default function remarkFediverseUser(options = {}) {
     return function transformer(ast) {
         visit(ast, 'link', (node, index, parent) => {
             if (!isLinkNode(node) || !parent || typeof index !== 'number' || !node.url.startsWith('mailto:'))
