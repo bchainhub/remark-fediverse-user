@@ -5,8 +5,63 @@ function isLinkNode(node) {
 function isTextNode(node) {
     return node.type === 'text';
 }
+const extractMatches = (text, regex) => {
+    const matches = [];
+    for (const match of text.matchAll(regex)) {
+        matches.push({
+            fullMatch: match[0],
+            username: match[1],
+            domain: match[2],
+            start: match.index,
+        });
+    }
+    return matches;
+};
+const makeLinkNode = (url, text, title) => ({
+    type: 'link',
+    url,
+    title: title || null,
+    children: [{ type: 'text', value: text }],
+});
+const makeTextNode = (value) => ({
+    type: 'text',
+    value
+});
 export default function remarkFediverseUser(options = {}) {
-    return function transformer(ast) {
+    const finalOptions = {
+        checkText: true,
+        protocol: 'https',
+        ...options,
+    };
+    const transformer = (ast) => {
+        if (finalOptions.checkText) {
+            const replacements = [];
+            visit(ast, 'text', (node, index, parent) => {
+                if (!isTextNode(node) || !parent || typeof index !== 'number')
+                    return;
+                const regex = /@([a-z0-9_-]+)@([\w.]+)/gi;
+                const matches = extractMatches(node.value, regex);
+                if (matches.length === 0)
+                    return;
+                const newNodes = [];
+                let lastIndex = 0;
+                matches.forEach(({ fullMatch, username, domain, start }) => {
+                    if (start > lastIndex) {
+                        newNodes.push(makeTextNode(node.value.slice(lastIndex, start)));
+                    }
+                    const url = `${finalOptions.protocol}://${domain}/@${username}`;
+                    newNodes.push(makeLinkNode(url, `@${username}@${domain}`, `@${username}`));
+                    lastIndex = start + fullMatch.length;
+                });
+                if (lastIndex < node.value.length) {
+                    newNodes.push(makeTextNode(node.value.slice(lastIndex)));
+                }
+                replacements.push({ parent, index, newNodes });
+            });
+            for (const { parent, index, newNodes } of replacements) {
+                parent.children.splice(index, 1, ...newNodes);
+            }
+        }
         visit(ast, 'link', (node, index, parent) => {
             if (!isLinkNode(node) || !parent || typeof index !== 'number' || !node.url.startsWith('mailto:'))
                 return;
@@ -21,11 +76,12 @@ export default function remarkFediverseUser(options = {}) {
                     if (prevNode.value === '') {
                         parent.children.splice(index - 1, 1);
                     }
-                    node.url = `https://${domain}/@${username}`;
+                    node.url = `${finalOptions.protocol}://${domain}/@${username}`;
                     node.title = `@${username}`;
                     node.children = [{ type: 'text', value: `@${username}@${domain}` }];
                 }
             }
         });
     };
+    return transformer;
 }

@@ -33,4 +33,11 @@ FediversePodsHandlers('Keeps email links unmodified without preceding @ symbol',
   assert.is(output, expected);
 });
 
+FediversePodsHandlers('Transforms plain text identifier', async () => {
+  const inputMarkdown = 'Send an email to @rastislav@coretalk.space for more info.';
+  const output = normalizeString(await processMarkdown(inputMarkdown));
+  const expected = 'Send an email to [@rastislav@coretalk.space](https://coretalk.space/@rastislav "@rastislav") for more info.';
+  assert.is(output, expected);
+});
+
 FediversePodsHandlers.run();

@@ -36,9 +36,16 @@ import fediverseUser from 'remark-fediverse-user';
 })();
 ```
 
-The plugin scans for Fediverse user notations (e.g., `@username@domain`) in your markdown content and transforms them into markdown links.
+The plugin scans for Fediverse user notations (e.g., `@username@domain` or `@<mailto:username@domain>`) in your markdown content and transforms them into markdown links.
 
-It is transforming the e-mail links with prefix `@` then any e-mail link with the prefix will be transformed to a fediverse link.
+It is transforming the e-mail links and text identifiers with prefix `@` then any e-mail and text link with the prefix will be transformed to a fediverse link.
+
+## Options
+
+The plugin accepts an optional configuration object with the following properties:
+
+- `checkText`: (boolean): If set to `true`, the plugin will check the text content and transform the Fediverse handle if the text content matches the Fediverse handle format. Default is `true`.
+- **`protocol`** (string): The protocol to use for the Fediverse links. Default is `https`.
 
 ## Features
 
