@@ -1,21 +1,5 @@
-import { type Node } from 'unist';
+import { Link, Node, Parent, Root, RootContent, Text } from 'mdast';
 import { visit } from 'unist-util-visit';
-
-interface LinkNode extends Node {
-  type: 'link';
-  url: string;
-  title: string | null;
-  children: TextNode[];
-}
-
-interface TextNode extends Node {
-  type: 'text';
-  value: string;
-}
-
-interface ParentNode extends Node {
-  children: Array<Node>;
-}
 
 interface FediverseUserOptions {
   checkText?: boolean;
@@ -29,14 +13,6 @@ interface Match {
   start: number;
 }
 
-function isLinkNode(node: Node): node is LinkNode {
-  return node.type === 'link';
-}
-
-function isTextNode(node: Node): node is TextNode {
-  return node.type === 'text';
-}
-
 const extractMatches = (text: string, regex: RegExp): Match[] => {
   const matches: Match[] = [];
   for (const match of text.matchAll(regex)) {
@@ -44,48 +20,54 @@ const extractMatches = (text: string, regex: RegExp): Match[] => {
       fullMatch: match[0],
       username: match[1],
       domain: match[2],
-      start: match.index,
+      start: match.index || 0,
     });
   }
   return matches;
 };
 
-const makeLinkNode = (url: string, text: string, title?: string) => ({
+const makeLinkNode = (url: string, text: string, title?: string): Link => ({
   type: 'link',
   url,
   title: title || null,
-  children: [{ type: 'text', value: text }],
+  children: [{
+    type: 'text',
+    value: text,
+  }],
 });
 
-const makeTextNode = (value: string): TextNode => ({
+const makeTextNode = (value: string): Text => ({
   type: 'text',
-  value
+  value,
 });
 
-/**
- * A remark plugin to parse the email links prefixed with `@` and transform them to fediverse link.
- * @param options - Options for the Fediverse plugin.
- * @returns A transformer for the AST.
- */
-export default function remarkFediverseUser(options: FediverseUserOptions = {}): (ast: Node) => void {
+const isTextNode = (node: Node): node is Text => {
+  return node.type === 'text';
+}
+
+const isLinkNode = (node: Node): node is Link => {
+  return node.type === 'link';
+}
+
+export default function remarkFediverseUser(options: FediverseUserOptions = {}): (ast: Root) => void {
   const finalOptions = {
     checkText: true, // Check the text node
     protocol: 'https', // The protocol to use for the link
     ...options,
   };
 
-  const transformer = (ast: Node): void => {
+  const transformer = (tree: Root): void => {
     if (finalOptions.checkText) {
-      const replacements: { parent: ParentNode; index: number; newNodes: Node[] }[] = [];
+      const replacements: { parent: Parent; index: number; newNodes: RootContent[] }[] = [];
 
-      visit<Node, 'text'>(ast, 'text', (node: TextNode, index: number, parent: ParentNode | undefined) => {
+      visit(tree, 'text', (node: Text, index: number | undefined, parent: Parent | undefined) => {
         if (!isTextNode(node) || !parent || typeof index !== 'number') return;
 
         const regex = /@([a-z0-9_-]+)@([\w.]+)/gi;
         const matches = extractMatches(node.value, regex);
         if (matches.length === 0) return;
 
-        const newNodes: Node[] = [];
+        let newNodes: RootContent[] = [];
         let lastIndex = 0;
 
         // Iterate over the matches and create new nodes
@@ -114,7 +96,7 @@ export default function remarkFediverseUser(options: FediverseUserOptions = {}):
       }
     }
 
-    visit<Node, 'link'>(ast, 'link', (node: Node, index: number, parent: ParentNode | undefined) => {
+    visit(tree, 'link', (node: Link, index: number | undefined, parent: Parent | undefined) => {
       if (!isLinkNode(node) || !parent || typeof index !== 'number' || !node.url.startsWith('mailto:')) return;
 
       const prevNode = index > 0 ? parent.children[index - 1] : null;
@@ -147,5 +129,4 @@ export default function remarkFediverseUser(options: FediverseUserOptions = {}):
   };
 
   return transformer;
-
 }
