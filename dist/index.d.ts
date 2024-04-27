@@ -1,7 +1,7 @@
-import { type Node } from 'unist';
+import { Root } from 'mdast';
 interface FediverseUserOptions {
     checkText?: boolean;
     protocol?: string;
 }
-export default function remarkFediverseUser(options?: FediverseUserOptions): (ast: Node) => void;
+export default function remarkFediverseUser(options?: FediverseUserOptions): (ast: Root) => void;
 export {};
